@@ -2,21 +2,21 @@ use std::io;
 
 //Stałe, tylko dla wygody
 
-const INF: f32 = std::f32::INFINITY;
-const NEGINF: f32 = std::f32::NEG_INFINITY; 
+const INF: i8 = 2;
+const NEGINF: i8 = -2;
 
 const PERSON: i8 = -1;
 const COMPUTER: i8 = 1;
 
 //Zwraca listę z koordynatami pustych pól
 
-fn empty_cells(board: &[Vec<i8>]) -> Vec<Vec<i8>>{
-    let mut cells: Vec<Vec<i8>> = Vec::new();
+fn empty_cells(board: &[Vec<i8>]) -> Vec<Vec<usize>>{
+    let mut cells: Vec<Vec<usize>> = Vec::new();
 
     for (x, row) in board.iter().enumerate() {
         for (y, &cell) in row.iter().enumerate(){
             if cell == 0{
-                cells.push(vec![x as i8, y as i8]);
+                cells.push(vec![x, y]);
             }
         }
     }
@@ -25,7 +25,7 @@ fn empty_cells(board: &[Vec<i8>]) -> Vec<Vec<i8>>{
 
 //Sprawdza, czy można wykonać ruch, dokładniej sprawdza czy koordynaty ruchu są puste
 
-fn valid_move(x: i8, y: i8, board: &[Vec<i8>]) -> bool{
+fn valid_move(x: usize, y: usize, board: &[Vec<i8>]) -> bool{
     empty_cells(board).contains(&vec![x, y])
 }
 
@@ -34,10 +34,10 @@ fn valid_move(x: i8, y: i8, board: &[Vec<i8>]) -> bool{
 fn get_player_move(board: &mut Vec<Vec<i8>>){
     let mut res = String::new();
     io::stdin().read_line(&mut res).expect("Failed reading input.");
-    let cords: Vec<i8> = res.split_whitespace().map(|x| {x.parse::<i8>().expect("Failed parsing at split.")-1}).collect();
+    let cords: Vec<usize> = res.split_whitespace().map(|x| {x.parse::<usize>().expect("Failed parsing at split.")-1}).collect();
 
     if valid_move(cords[1], cords[0], &board){
-        board[cords[1] as usize][cords[0] as usize] = PERSON;
+        board[cords[1]][cords[0]] = PERSON;
     } else {
         println!("You cannot make that move.");
         get_player_move(board);
@@ -62,45 +62,36 @@ fn draw_board(board: &[Vec<i8>]){
 //Funkcja sprawdza czy podany gracz wygrał
 
 fn wins(board: &[Vec<i8>], player: i8) -> bool{
-    fn win_line(line: &[i8], sign: i8) -> bool{
-        let mut counter: usize = 0;
-        for &n in line{
-            if n == sign{
-                counter += 1;
-            }
-        }
-        counter == line.len()
+    let len = board.len();
+
+    fn win_line(line: &[i8], sign: i8, len: usize) -> bool{
+        line[0..len].iter().all(|&x| x == sign)
     }
 
-    fn win_diagonal(board: &[Vec<i8>], sign: i8) -> bool{
-        let mut diag: Vec<i8> = Vec::new();
-        let mut transposed_diag: Vec<i8> = Vec::new();
+    fn win_diagonal(board: &[Vec<i8>], sign: i8, len: usize) -> bool{
+        let mut diag = [0i8; 100];
+        diag.copy_from_slice(&board[0]);
+        let mut transposed_diag = [0i8; 100];
+        transposed_diag.copy_from_slice(&board[0]);
 
-        for n in 0..board.len(){
-            diag.push(board[n][n]);
-            transposed_diag.push(board[n][board.len()-n-1]);
+        for n in 0..len{
+            diag[..len].clone_from_slice(&board[n][..len])
         }
 
-        if win_line(&diag, sign){
-            true
-        } else {
-            win_line(&transposed_diag, sign)
-        } 
-    }
-
-    let mut transposed_board = vec![vec![0i8; board.len()]; board.len()];
+        win_line(&diag, sign, len)
     
-    for i in 0..board.len() {
-        for j in 0..board.len() {
+    }
+
+    let mut transposed_board = vec![vec![0i8; len]; len];
+
+    for i in 0..len{
+        for j in 0..len{
             transposed_board[i][j] = board[j][i];
         }
     }
 
-    if board.iter().any(|b| win_line(&b, player)) || transposed_board.iter().any(|b| win_line(&b, player)){
-        return true;
-    } else {
-        return win_diagonal(&board, player);
-    }
+    board.iter().any(|b| win_line(&b, player, len)) || transposed_board.iter().any(|b| win_line(&b, player, len)) || win_diagonal(&board, player, len) || win_diagonal(&transposed_board, player, len)
+
 }
 
 //Funkcja zwracająca gracza, który wygrał lub 0 jeśli nikt nie wygrał
@@ -118,35 +109,35 @@ fn evaluate(board: &[Vec<i8>]) -> i8 {
 //Struktura ułatwiająca zapisanie funkcji, używana tylko jako typ zwrotny funkcji minimax
 
 #[derive(Copy, Clone)]
-struct Best (i32,i32,f32);
+struct Best (usize, usize, i8);
 
 fn minimax(board: &mut Vec<Vec<i8>>, depth: u8, player: i8) -> Best{
     //Inicjalizacja wewnętrzych zmiennych (a i b na podstawie argumentów)
     let mut best: Best;
     //Dobranie wartości nieskończoności do gracza, komputer maksymalizuje więc otrzymuje -nieskończoność
     match player {
-        COMPUTER => best = Best(-1, -1, NEGINF),
-        _ => best = Best(-1, -1, INF)
+        COMPUTER => best = Best(0, 0, NEGINF),
+        _ => best = Best(0, 0, INF)
     }
 
     //Sprawdzenie czy ktokolwiek wygrał i odpowiednia zmiana wartości Best
     if wins(board, COMPUTER) || wins(board, PERSON) || depth == 0{
-        let score = evaluate(&board) as f32;
-        return Best(-1, -1, score);
+        let score = evaluate(&board);
+        return Best(0, 0, score);
     }
 
     for cell in empty_cells(&board).iter(){
         let (x, y) = (cell[0], cell[1]);
-        board[x as usize][y as usize] = player;
+        board[x][y] = player;
         let mut score = minimax(board, depth-1, -player);
-        board[x as usize][y as usize] = 0;
-        score.0 = x as i32;
-        score.1 = y as i32;
+        board[x ][y] = 0;
+        score.0 = x;
+        score.1 = y;
         
         //Scenariusz dla komputera, maksymalizacja
         if (player == COMPUTER && score.2 > best.2) || (player == PERSON && score.2 < best.2){
                 best = score;
-                if best.2 == player as f32{
+                if best.2 == player{
                     return best;
                 }
         }
@@ -170,13 +161,13 @@ fn main(){
         io::stdin().read_line(&mut board_size).expect("Failed reading input");
 
         //Konwersja rozmiaru planszy na typ liczbowy z obsługą wyjątków
-        let board_size: i32 = match board_size.trim().parse(){
+        let board_size: usize = match board_size.trim().parse(){
             Ok(n) => n,
             Err(err) =>{println!("Failed parsing the size of the board. {}", err); continue}
         };
 
         //Inicjalizacja planszy
-        let mut board = vec![vec![0i8; board_size as usize]; board_size as usize];
+        let mut board = vec![vec![0i8; board_size]; board_size];
 
         println!("You are X and go first.");
 
