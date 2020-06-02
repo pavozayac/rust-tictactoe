@@ -72,7 +72,6 @@ fn wins(board: &[Vec<i8>], player: i8) -> bool{
         let mut diag = vec![0i8; len];
         let mut transposed_diag = vec![0i8; len];
         
-
         for n in 0..len{
             diag[n] = board[n][n];
             transposed_diag[n] = board[n][len-n-1];
@@ -90,7 +89,7 @@ fn wins(board: &[Vec<i8>], player: i8) -> bool{
         }
     }
 
-    board.iter().any(|b| win_line(&b, player, len)) || transposed_board.iter().any(|b| win_line(&b, player, len)) || win_diagonal(&board, player, len) || win_diagonal(&transposed_board, player, len)
+    board.iter().any(|b| win_line(&b, player, len)) || transposed_board.iter().any(|b| win_line(&b, player, len)) || win_diagonal(&board, player, len)
 
 }
 
