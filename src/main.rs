@@ -70,9 +70,7 @@ fn wins(board: &[Vec<i8>], player: i8) -> bool{
 
     fn win_diagonal(board: &[Vec<i8>], sign: i8, len: usize) -> bool{
         let mut diag = [0i8; 100];
-        diag[..len].copy_from_slice(&board[0]);
         let mut transposed_diag = [0i8; 100];
-        transposed_diag[..len].copy_from_slice(&board[0]);
 
         for n in 0..len{
             diag[n] = board[n][n];
