@@ -75,7 +75,7 @@ fn wins(board: &[Vec<i8>], player: i8) -> bool{
         transposed_diag.copy_from_slice(&board[0]);
 
         for n in 0..len{
-            diag[..len].clone_from_slice(&board[n][..len])
+            diag[..len].clone_from_slice(&board[n][..len]);
         }
 
         win_line(&diag, sign, len)
