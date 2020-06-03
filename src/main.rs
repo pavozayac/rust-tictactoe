@@ -10,13 +10,13 @@ const COMPUTER: i8 = 1;
 
 //Zwraca listę z koordynatami pustych pól
 
-fn empty_cells(board: &[Vec<i8>]) -> Vec<Vec<usize>>{
-    let mut cells: Vec<Vec<usize>> = Vec::new();
+fn empty_cells(board: &[Vec<i8>]) -> Vec<[usize; 2]>{
+    let mut cells: Vec<[usize; 2]> = Vec::new();
 
-    for (x, row) in board.iter().enumerate() {
-        for (y, &cell) in row.iter().enumerate(){
-            if cell == 0{
-                cells.push(vec![x, y]);
+    for x in 0..board.len(){
+        for y in 0..board.len(){
+            if board[x][y] == 0{
+                cells.push([x, y]);
             }
         }
     }
@@ -26,7 +26,7 @@ fn empty_cells(board: &[Vec<i8>]) -> Vec<Vec<usize>>{
 //Sprawdza, czy można wykonać ruch, dokładniej sprawdza czy koordynaty ruchu są puste
 
 fn valid_move(x: usize, y: usize, board: &[Vec<i8>]) -> bool{
-    empty_cells(board).contains(&vec![x, y])
+    empty_cells(board).contains(&[x, y])
 }
 
 //Funkcja wywoływana by przyjąć i zapisać ruch użytkownika
@@ -64,20 +64,25 @@ fn draw_board(board: &[Vec<i8>]){
 fn wins(board: &[Vec<i8>], player: i8) -> bool{
     let len = board.len();
 
-    fn win_line(line: &[i8], sign: i8, len: usize) -> bool{
-        line[0..len].iter().all(|&x| x == sign)
+    fn win_line(line: &[i8], sign: i8) -> bool{
+        line.to_vec() == [sign].repeat(line.len())
     }
 
     fn win_diagonal(board: &[Vec<i8>], sign: i8, len: usize) -> bool{
-        let mut diag = vec![0i8; len];
-        let mut transposed_diag = vec![0i8; len];
+        let mut counter: usize = 0;
+        let mut transposed_counter: usize = 0;
         
         for n in 0..len{
-            diag[n] = board[n][n];
-            transposed_diag[n] = board[n][len-n-1];
+            if board[n][n] == sign{
+                counter += 1;
+            }
+
+            if board[n][len-n-1] == sign{
+                transposed_counter += 1;
+            }
         }
 
-        win_line(&diag, sign, len) || win_line(&transposed_diag, sign, len)
+        counter == len || transposed_counter == len
     
     }
 
@@ -89,7 +94,7 @@ fn wins(board: &[Vec<i8>], player: i8) -> bool{
         }
     }
 
-    board.iter().any(|b| win_line(&b, player, len)) || transposed_board.iter().any(|b| win_line(&b, player, len)) || win_diagonal(&board, player, len)
+    board.iter().any(|b| win_line(&b, player)) || transposed_board.iter().any(|b| win_line(b, player)) || win_diagonal(&board, player, len)
 
 }
 
@@ -125,11 +130,11 @@ fn minimax(board: &mut Vec<Vec<i8>>, depth: u8, player: i8) -> Best{
         return Best(0, 0, score);
     }
 
-    for cell in empty_cells(&board).iter(){
+    for cell in empty_cells(board.as_slice()).iter(){
         let (x, y) = (cell[0], cell[1]);
         board[x][y] = player;
         let mut score = minimax(board, depth-1, -player);
-        board[x ][y] = 0;
+        board[x][y] = 0;
         score.0 = x;
         score.1 = y;
         
