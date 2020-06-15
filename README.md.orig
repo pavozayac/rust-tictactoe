@@ -1,0 +1,6 @@
+# Tic Tac Toe in Rust
+<<<<<<< HEAD
+A simple command-line Tic-Tac-Toe game written fully in Rust.
+=======
+A simple command-line Tic-Tac-Toe game written fully in Rust.
+>>>>>>> 02afcfc9bb5609b510b09e2768fa29699811b0dc
