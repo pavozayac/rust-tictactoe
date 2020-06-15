@@ -20,6 +20,7 @@ fn empty_cells(board: &[Vec<i8>]) -> Vec<[usize; 2]>{
             }
         }
     }
+
     cells
 }
 
@@ -36,11 +37,16 @@ fn get_player_move(board: &mut Vec<Vec<i8>>){
     io::stdin().read_line(&mut res).expect("Failed reading input.");
     let cords: Vec<usize> = res.split_whitespace().map(|x| {x.parse::<usize>().expect("Failed parsing at split.")-1}).collect();
 
-    if valid_move(cords[1], cords[0], &board){
-        board[cords[1]][cords[0]] = PERSON;
-    } else {
-        println!("You cannot make that move.");
+    if cords.len() != 2{
+        println!("You entered the wrong number of coordinates.");
         get_player_move(board);
+    } else {
+        if valid_move(cords[1], cords[0], &board){
+            board[cords[1]][cords[0]] = PERSON;
+        } else {
+            println!("You cannot make that move.");
+            get_player_move(board);
+        }
     }
 }   
 
@@ -174,6 +180,7 @@ fn main(){
         let mut board = vec![vec![0i8; board_size]; board_size];
 
         println!("You are X and go first.");
+        println!("Enter the coordinates of the field you want to occupy like this \"horizontal vertical\", e.g. \"1 1\" ");
 
         let mut playing = true;
 
@@ -229,7 +236,7 @@ fn main(){
         }
 
         //Obsługa ponownej rozgrywki
-        println!("Do you want to play again?");
+        println!("Do you want to play again? (y/n)");
 
         let mut ans = String::new();
 
